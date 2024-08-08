@@ -1,0 +1,25 @@
+# Example list containing numbers in string format
+data = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
+
+# Function to create groups of 5 items starting from a specified position
+def create_groups(data, start_position):
+    groups = []
+    length = len(data)
+    
+    # Iterate through the list in steps of 5 starting from the start_position
+    for i in range(start_position, length, 5):
+        group = data[i:i + 5]  # Get the next 5 items
+        groups.append(group)   # Append the group to the groups list
+    
+    return groups
+
+# Starting position
+start_position = 0
+
+# Create groups of 5 items starting from the specified position
+groups = create_groups(data, start_position)
+
+print("Original List:")
+print(data)
+print("\nGroups of 5 Items:")
+print(groups)
