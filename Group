@@ -1,3 +1,117 @@
+
+
+
+
+
+
+
+import csv
+import os
+import pandas as pd
+import re
+
+# Assuming the rest of your code remains the same...
+
+# Function to convert groups to a format suitable for CSV writing
+def groups_to_dict(groups):
+    data_dicts = []
+    for group in groups:
+        data_dict = {
+            'field1': group[0],  # Replace 'field1', 'field2', etc., with actual field names
+            'field2': group[1],
+            'field3': group[2],
+            # Add as many fields as necessary based on the structure of `group`
+        }
+        data_dicts.append(data_dict)
+    return data_dicts
+
+# Function to process the files and save the output CSV files in the specified folder
+def process_files(predefined_string, input_folder, output_folder):
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    
+    for filename in os.listdir(input_folder):
+        if filename.endswith(".xlsx"):
+            xl_path = os.path.join(input_folder, filename)
+            print(f"Processing file: {xl_path}")
+            
+            # Initialize an empty list to accumulate groups from all sheets
+            all_groups = []
+            
+            xls = pd.ExcelFile(xl_path)
+            for sheet_name in xls.sheet_names:
+                df = pd.read_excel(xls, sheet_name=sheet_name)
+                data_list = df.values.tolist()
+                
+                e1 = process_cosine_similarity(predefined_string, data_list[0:2])
+                z = filter_rows(e1)
+                removed_items = process_exit_load(z)
+                
+                b1 = [item for row in removed_items for item in row if item[:1].isdigit()]
+                
+                date_patterns = [
+                    r'\b(0?[1-9]|[12][0-9]|3[01])[\/](0?[1-9]|1[0-2])[\/](\d{4})\b',
+                    r'\b(0?[1-9]|1[0-2])[\/](0?[1-9]|[12][0-9]|3[01])[-](\d{4})\b',
+                    r'\b(\d{4})[\/](0?[1-9]|1[0-2])[-](0?[1-9]|[12][0-9]|3[81])\b',
+                    r'\b(January|February|March|April|May|June|July|August|September|October|November|December)\s(0?[1-9]|[12][0-9]|3[01])\b'
+                ]
+                
+                with_dates, without_dates = filter_dates_and_digits(b1, date_patterns)
+                
+                start_position = 0 if without_dates and without_dates[0][:1].isdigit() else 1
+                groups = create_groups(without_dates, start_position)
+                print(f'Groups created for {sheet_name}')
+                
+                # Append the groups from this sheet to the main list
+                all_groups.extend(groups)
+            
+            # Convert the accumulated groups to a list of dictionaries
+            group_dicts = groups_to_dict(all_groups)
+            
+            # Define the CSV filename and path
+            csv_filename = f"{os.path.splitext(filename)[0]}.csv"
+            csv_path = os.path.join(output_folder, csv_filename)
+            
+            # Save the accumulated data to CSV
+            if group_dicts:
+                fieldnames = group_dicts[0].keys()  # Use the keys from the first dictionary as headers
+                with open(csv_path, 'w', newline='') as csvfile:
+                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                    writer.writeheader()
+                    writer.writerows(group_dicts)
+                print(f"Saved CSV: {csv_path}")
+            else:
+                print(f"No groups to save for {filename}.")
+
+# Example usage
+predefined_string = "Amount, Transaction Type, NAV, Price, NO_of_Units, Balance_Units"
+input_folder = r"D:\Python\ajit\text_extract\try2\try6\op\eg\egi"
+output_folder = r"D:\Python\ajit\text_extract\try2\try6\op\eg\egi_csv"
+
+process_files(predefined_string, input_folder, output_folder)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Example list containing numbers in string format
 data = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
 
