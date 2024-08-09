@@ -38,3 +38,40 @@ for item in sample_list:
 # Display the lists
 print("List without dates:", list_without_dates)
 print("List with dates:", list_with_dates)
+
+
+
+
+def process_data(a, keyword="Levied"):
+    """
+    Processes the list 'a' to clean, filter, and categorize data based on specific conditions.
+
+    Parameters:
+    - a: List of data to be processed.
+    - keyword: Keyword to filter out specific items (default is "Levied").
+
+    Returns:
+    - b1: List of cleaned and filtered items where the first character is a digit.
+    """
+    b1 = []
+
+    for i in a:
+        for j in i:
+            c = str(j).replace("(", "").replace(")", "").replace(",", "").split("\n")
+            if not any(keyword in sub_item for sub_item in c):
+                for item in c:
+                    if item[:1].isdigit():
+                        b1.append(item)
+
+    return b1
+
+# Example usage:
+a = [
+    ["(123, 'Amount', 456)", "(789, 'Transaction Type', 012)"],
+    ["(111, 'Levied', 222)", "(333, 'NAV', 444)"],
+    ["(555, 'Price', 666)", "(777, 'NO_of_Units', 888)"],
+]
+
+# Process the data
+result = process_data(a)
+print(result)
