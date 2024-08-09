@@ -25,3 +25,48 @@ similarity_score = jaccard_similarity(list1, list2)
 print("List 1:", list1)
 print("List 2:", list2)
 print("Jaccard Similarity Score:", similarity_score)
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+def calculate_cosine_similarity(list1, list2, index):
+    """
+    Calculate the cosine similarity between the content at the specified index
+    of two lists.
+    
+    Parameters:
+    - list1: First list of strings
+    - list2: Second list of strings
+    - index: Index position of the content to compare (e.g., 0 for 0th position)
+    
+    Returns:
+    - similarity_score: The cosine similarity score between the two specified strings
+    """
+    # Extract the content from the specified index
+    content1 = list1[index]
+    content2 = list2[index]
+    
+    # Combine the two sentences into a list
+    documents = [content1, content2]
+    
+    # Convert the text into a matrix of token counts
+    vectorizer = CountVectorizer().fit_transform(documents)
+    vectors = vectorizer.toarray()
+    
+    # Calculate the cosine similarity between the vectors
+    cosine_sim = cosine_similarity(vectors)
+    
+    # Return the similarity score between the two documents
+    return cosine_sim[0, 1]
+
+# Example usage:
+list1 = ["This is the first sentence.", "Another sentence for comparison."]
+list2 = ["This is the first sentence.", "A different sentence altogether."]
+
+# Compare the 0th position content
+similarity_score_0 = calculate_cosine_similarity(list1, list2, 0)
+
+# Compare the 1st position content
+similarity_score_1 = calculate_cosine_similarity(list1, list2, 1)
+
+print(f"Cosine Similarity at 0th position: {similarity_score_0}")
+print(f"Cosine Similarity at 1st position: {similarity_score_1}")
