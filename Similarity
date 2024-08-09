@@ -116,3 +116,55 @@ similarities = calculate_cosine_similarity_with_predefined_string(predefined_str
 print("Cosine Similarities:")
 for position, score in similarities.items():
     print(f"{position}: {score}")
+
+
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+def max_cosine_similarity_with_predefined_string(predefined_string, data_list):
+    """
+    Calculate the cosine similarity between a predefined string and the content at both the 0th and 1st
+    positions of a list of strings (converted from a table). Return only the maximum similarity score
+    and its corresponding position.
+    
+    Parameters:
+    - predefined_string: The string to compare with the list content.
+    - data_list: A list of strings (e.g., content from a table converted into a list).
+    
+    Returns:
+    - max_similarity_info: A tuple containing the maximum similarity score and its corresponding position.
+    """
+    similarities = {}
+    
+    # Iterate through the 0th and 1st positions (if available) and calculate similarity
+    for index in range(min(2, len(data_list))):  # Only checks 0th and 1st positions if they exist
+        content = data_list[index]
+        
+        # Combine the predefined string and the list content into a list
+        documents = [predefined_string, content]
+        
+        # Convert the text into a matrix of token counts
+        vectorizer = CountVectorizer().fit_transform(documents)
+        vectors = vectorizer.toarray()
+        
+        # Calculate the cosine similarity between the vectors
+        cosine_sim = cosine_similarity(vectors)
+        
+        # Store the similarity score in the dictionary with the corresponding position
+        similarities[f"position_{index}"] = cosine_sim[0, 1]
+    
+    # Find the position with the maximum similarity score
+    max_position = max(similarities, key=similarities.get)
+    max_similarity_score = similarities[max_position]
+    
+    # Return the maximum similarity score and its position
+    return max_similarity_score, max_position
+
+# Example usage:
+predefined_string = "This is a predefined sentence."
+list_from_table = ["This is the first sentence.", "Another sentence for comparison."]
+
+# Calculate the maximum cosine similarity and get its position
+max_similarity_score, max_position = max_cosine_similarity_with_predefined_string(predefined_string, list_from_table)
+
+print(f"Maximum Cosine Similarity: {max_similarity_score} at {max_position}")
