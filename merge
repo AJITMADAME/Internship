@@ -1,0 +1,41 @@
+def process_e1(a):
+    """
+    Cleans and formats the data by removing specific characters and splitting strings.
+    
+    Parameters:
+    - a: A list of lists containing strings or numbers.
+    
+    Returns:
+    - e1: A list of cleaned and formatted sublists.
+    """
+    e1 = []
+    
+    for sublist in a:
+        for item in sublist:
+            c = str(item).replace("(", "").replace(")", "").replace(",", "").split("\n")
+            e1.append(c)
+    
+    return e1
+
+
+def filter_and_extract_digit_starting_items(e1):
+    """
+    Filters out items containing the word "Levied" and extracts items that start with a digit.
+    
+    Parameters:
+    - e1: A list of cleaned and formatted sublists.
+    
+    Returns:
+    - b1: A list of items that start with a digit after filtering out those containing "Levied".
+    """
+    b1 = []
+    
+    # Filter out items containing "Levied" and extract items that start with a digit
+    for item in e1:
+        s = "Levied"
+        if not any(s in element for element in item):
+            for element in item:
+                if element[:1].isdigit():
+                    b1.append(element)
+    
+    return b1
