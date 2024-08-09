@@ -70,3 +70,49 @@ similarity_score_1 = calculate_cosine_similarity(list1, list2, 1)
 
 print(f"Cosine Similarity at 0th position: {similarity_score_0}")
 print(f"Cosine Similarity at 1st position: {similarity_score_1}")
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+def calculate_cosine_similarity_with_predefined_string(predefined_string, data_list):
+    """
+    Calculate the cosine similarity between a predefined string and the content at both the 0th and 1st
+    positions of a list of strings (converted from a table).
+    
+    Parameters:
+    - predefined_string: The string to compare with the list content.
+    - data_list: A list of strings (e.g., content from a table converted into a list).
+    
+    Returns:
+    - similarities: A dictionary containing cosine similarity scores for both the 0th and 1st positions.
+    """
+    similarities = {}
+    
+    # Iterate through the 0th and 1st positions (if available) and calculate similarity
+    for index in range(min(2, len(data_list))):  # Only checks 0th and 1st positions if they exist
+        content = data_list[index]
+        
+        # Combine the predefined string and the list content into a list
+        documents = [predefined_string, content]
+        
+        # Convert the text into a matrix of token counts
+        vectorizer = CountVectorizer().fit_transform(documents)
+        vectors = vectorizer.toarray()
+        
+        # Calculate the cosine similarity between the vectors
+        cosine_sim = cosine_similarity(vectors)
+        
+        # Store the similarity score in the dictionary with the corresponding position
+        similarities[f"position_{index}"] = cosine_sim[0, 1]
+    
+    return similarities
+
+# Example usage:
+predefined_string = "This is a predefined sentence."
+list_from_table = ["This is the first sentence.", "Another sentence for comparison.", "Extra content not compared."]
+
+# Calculate cosine similarities
+similarities = calculate_cosine_similarity_with_predefined_string(predefined_string, list_from_table)
+
+print("Cosine Similarities:")
+for position, score in similarities.items():
+    print(f"{position}: {score}")
