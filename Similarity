@@ -1,3 +1,33 @@
+import re
+
+# Example text containing the Folio number
+text = """
+Your investment details:
+Folio No: 10352655 / 77
+Other information...
+"""
+
+# Regex pattern to match the Folio number
+folio_pattern = r"Folio No:\s*(\d+\s*/\s*\d+)"
+
+# Search for the Folio number in the text
+match = re.search(folio_pattern, text)
+
+# If a match is found, extract the Folio number
+if match:
+    folio_number = match.group(1)
+    print(f"Folio Number: {folio_number}")
+else:
+    print("Folio Number not found")
+
+
+
+
+
+
+
+
+
 # Function to calculate Jaccard similarity between two lists
 def jaccard_similarity(list1, list2):
     # Convert lists to sets
