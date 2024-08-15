@@ -70,9 +70,13 @@ for i in os.listdir(file):
         df = pd.DataFrame(all_groups)
         df.columns = ['Amount(INR)', 'NAV(INR)', 'Price(INR)', 'No_of_Unit', 'Balance_Unit', 'Date']
         
-        # Adding the company name and folio number columns
-        df['Company Name'] = co * len(df)
-        df['Folio Number'] = folio * len(df)
+        # Adding the first value of company name and folio number as Series
+        df['Company Name'] = pd.Series(co[0], index=df.index)
+        df['Folio Number'] = pd.Series(folio[0], index=df.index)
+        
+        # Removing the first element after it's added to the DataFrame
+        co.pop(0)
+        folio.pop(0)
         
         # Saving the DataFrame to a CSV file
         df.to_csv(csv_path, index=False)
