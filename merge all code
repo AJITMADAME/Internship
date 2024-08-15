@@ -71,8 +71,8 @@ for i in os.listdir(file):
         df.columns = ['Amount(INR)', 'NAV(INR)', 'Price(INR)', 'No_of_Unit', 'Balance_Unit', 'Date']
         
         # Adding the first value of company name and folio number as Series
-        df['Company Name'] = pd.Series(co[0], index=df.index)
-        df['Folio Number'] = pd.Series(folio[0], index=df.index)
+        df['Company Name'] = pd.Series([co[0]] * len(df), index=df.index)
+        df['Folio Number'] = pd.Series([folio[0]] * len(df), index=df.index)
         
         # Removing the first element after it's added to the DataFrame
         co.pop(0)
