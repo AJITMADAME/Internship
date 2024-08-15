@@ -1,5 +1,44 @@
 import re
 
+# Sample data as given
+data = [
+    {'Folio number': '10352635/40'},
+    {'Folio number': '19352655/77'},
+    {'Folio number': '11238532/84'},
+    {'Folio number': '11238891/62'},
+    {'Folio number': '12483571/17'},
+    {'Folio number': '12852812/34'},
+    {'Folio number': '15389577/07'},
+    {'Folio number': '15792786/47'},
+    {'Folio number': '16933497/37'},
+    {'Folio number': '29189887/49'},
+    {'Folio number': '23917319/15'},
+    {'Folio number': '25959164/59'},
+    {'Folio number': '25956166/95'},
+    {'Folio number': '25957861/54'}
+]
+
+# Extracting only the numeric part of each 'Folio number'
+extracted_numbers = [re.findall(r'\d+', item['Folio number'])[0] for item in data]
+
+# Output the extracted numbers
+print(extracted_numbers)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import re
+
 # Example text containing the Folio number
 text = """
 Your investment details:
