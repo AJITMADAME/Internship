@@ -1,0 +1,103 @@
+import os
+import pandas as pd
+from PyPDF2 import PdfReader
+
+# Directory paths
+file_directory = "path_to_excel_directory"
+pdf_file_directory = "path_to_pdf_directory"
+output_folder = "path_to_output_folder"
+
+# Lists to store extracted information
+all_groups = []
+all_tran = []
+folio = []
+co = []
+
+# Define a function to extract folio number using patterns
+def folio_number(text, patterns):
+    import re
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if match:
+            return match.group(0)
+    return None
+
+# Define patterns to identify folio numbers (example pattern)
+patterns = [r'\d{8}/\d{2}']
+
+# Iterate over each Excel file in the directory
+for i in os.listdir(file_directory):
+    x1_path = os.path.join(file_directory, i)
+    print(x1_path)
+    
+    # Construct the corresponding PDF path
+    pdf_path = os.path.join(pdf_file_directory, i.replace('.xlsx', '.pdf'))
+    
+    # Extract Folio number and Company name from the PDF file
+    if os.path.exists(pdf_path):
+        reader = PdfReader(pdf_path)
+        page = reader.pages[0]
+        text = page.extract_text()
+        
+        # Extract folio number and add to the list
+        folio1 = folio_number(text, patterns)
+        folio.append(folio1)
+        
+        # Extract part of the text and add to the company list
+        a = text.split('In')
+        c = a[0:10]
+        if len(c) > 3:
+            co.append(c[3])
+        else:
+            co.append(None)
+    
+    # Construct CSV filename
+    csv_filename = f"{os.path.splitext(i)[0]}.csv"
+    csv_path = os.path.join(output_folder, csv_filename)
+    
+    if x1_path.endswith("xlsx"):
+        xls = pd.ExcelFile(x1_path)
+        table_name = xls.sheet_names
+        
+        for t in table_name:
+            print(t)
+            df = pd.read_excel(xls, sheet_name=t, header=1)
+            a = df.values.tolist()
+            
+            for j in a[0:2]:
+                s = str(j)
+                vector1 = text_to_vector(predefined_string)
+                vector2 = text_to_vector(s)
+                cosine = get_cosine(vector1, vector2)
+                
+                if cosine > 0.07:
+                    q = a.remove(j)
+                    v = process_exit(q)
+                    z = filter_digit_starting_items(v)
+                    removed_items = process_exit_load(z)
+                    b2 = cleaned_data(removed_items)
+                    u = transaction_type(removed_items)
+                    all_tran.extend(u)
+                    
+                    m = v[0][0]
+                    if m[:1].isdigit():
+                        start_position = 2
+                        print('start_position_0')
+                        groups = create_groups(b2, start_position)
+                    else:
+                        start_position = 0
+                        print('start_position_1')
+                        groups = create_groups(b2, start_position)
+                    
+                    all_groups.extend(groups)
+        
+        # Creating DataFrame
+        df = pd.DataFrame(all_groups)
+        df.columns = ['Amount (INR)', 'NAV(INR)', 'Price (INR)', 'No_of_Unit', 'Balance_Unit', 'Date']
+        df['Transaction Type'] = pd.Series(all_tran)
+        df['Company Name'] = pd.Series(co)
+        df['Folio Number'] = pd.Series(folio)
+        
+        # Save to CSV
+        df.to_csv(csv_path, index=False)
+        print(df)
