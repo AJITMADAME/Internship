@@ -17,7 +17,6 @@ def INSInum(s):
             for k in es:
                 if k.lower().startswith("inf") or k.lower().startswith(" inf"):
                     v.append(k)
-    print("ISIN numbers found:", v)  # Debugging line
     return v
 
 # Loop through PDF files to extract folio numbers and company names
@@ -57,26 +56,22 @@ for i in os.listdir(file):
                 cosine = get_cosine(vector1, vector2)
 
                 if cosine >= 0.7:
-                    q = removed_line(a)
+                    q = removed_lien(a)
                     z1 = filter_digit_starting_items(q)
                     removed_items = process_exit_load(z1)
                     b2 = cleaned_data(removed_items)
                     u = transaction_type(removed_items)
-                    print("Transaction types (u):", u)  # Debugging line
                     all_tran.extend(u)
                 
                     # Call INSInum to get ISIN numbers
                     isin_numbers = INSInum(a)
 
                     # If group length is greater than 1, assign one ISIN number to the entire group
-                    if len(u) > 1:
-                        if isin_numbers:
-                            assigned_isin = isin_numbers[0]
-                            isin_column.extend([assigned_isin] * len(u))
-                        else:
-                            isin_column.extend([""] * len(u))  # Add empty ISINs if none found
-
-                    print("ISIN numbers column after assignment:", isin_column)  # Debugging line
+                    if len(u) > 1 and isin_numbers:
+                        assigned_isin = isin_numbers[0]  # Take the first ISIN number
+                        isin_column.extend([assigned_isin] * len(u))  # Assign it to the entire group
+                    else:
+                        isin_column.extend([""] * len(u))  # Add empty ISINs if none found
 
             # Further processing...
             m = v[0][0]
@@ -102,7 +97,6 @@ for i in os.listdir(file):
         if len(isin_column) == len(df):
             df['ISIN Number'] = pd.Series(isin_column, index=df.index)
         else:
-            print(f"ISIN Column Length: {len(isin_column)}, DataFrame Length: {len(df)}")  # Debugging line
             df['ISIN Number'] = pd.Series([""] * len(df), index=df.index)
 
         # Save DataFrame to CSV
