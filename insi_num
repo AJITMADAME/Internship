@@ -44,14 +44,15 @@ for i in os.listdir(file):
         table_name = xls.sheet_names
         all_groups = []
         all_tran = []
-        isin_column = []  # To store the ISIN numbers
+        group_isin_map = []  # To map each group to an ISIN number
 
         for j in table_name:
             print(j)
             df = pd.read_excel(xls, sheet_name=j, header=None)
             a = df.values.tolist()
-            for i in a[0:2]:
-                s = str(i)
+
+            for row in a[0:2]:
+                s = str(row)
                 vector1 = text_to_vector(predefined_string)
                 vector2 = text_to_vector(s)
                 cosine = get_cosine(vector1, vector2)
@@ -63,39 +64,47 @@ for i in os.listdir(file):
                     b2 = cleaned_data(removed_items)
                     u = transaction_type(removed_items)
                     print("Transaction types (u):", u)  # Debugging line
+                    all_tran.extend(u)
                     
                     # Check condition before calling INSInum
                     if len(u) > 1:
                         print("Calling INSInum with data:", a)  # Debugging line
                         isin_numbers = INSInum(a)
-                        isin_numbers = [x for x in isin_numbers if x]  # Remove empty lists
-                        if len(u) == len(isin_numbers):
-                            isin_column.extend(isin_numbers)
-                            print("ISIN numbers column after extending:", isin_column)  # Debugging line
-                        else:
-                            print(f"Length mismatch: u={len(u)}, isin_numbers={len(isin_numbers)}")  # Debugging line
-                    else:
-                        isin_column.extend([""] * len(u))  # Add empty strings if len(u) <= 1
+                        
+                        # Ensure length of isin_numbers matches length of u
+                        if len(isin_numbers) < len(u):
+                            isin_numbers.extend([""] * (len(u) - len(isin_numbers)))
+                        elif len(isin_numbers) > len(u):
+                            isin_numbers = isin_numbers[:len(u)]
 
-            # Further processing...
-            m = v[0][0]
-            if m[1:].isdigit():
-                start_position = 2
-                groups = create_groups(b2, start_position)
-            else:
-                start_position = 0
-                groups = create_groups(b2, start_position)
+                        # Create a list where each ISIN number is repeated according to the length of u
+                        extended_isin_numbers = [num for num in isin_numbers for _ in range(len(u))]
+                        group_isin_map.extend(extended_isin_numbers)
+                        print("Extended ISIN numbers column after mapping:", group_isin_map)  # Debugging line
 
-            all_groups.extend(groups)
-            all_tran.extend(u)
+                    # Create groups
+                    m = v[0][0] if v else ""
+                    start_position = 2 if m[1:].isdigit() else 0
+                    groups = create_groups(b2, start_position)
+                    all_groups.extend(groups)
+
+        # Ensure each group has one ISIN number
+        if len(all_groups) > len(group_isin_map):
+            group_isin_map.extend([""] * (len(all_groups) - len(group_isin_map)))
+        elif len(all_groups) < len(group_isin_map):
+            group_isin_map = group_isin_map[:len(all_groups)]
 
         # Creating the DataFrame with the extracted data
         df = pd.DataFrame(all_groups)
         df.columns = ['Amount(INR)', 'NAV(INR)', 'Price(INR)', 'No_of_Unit', 'Balance_Unit', 'Date']
         df['Transaction Type'] = pd.Series(all_tran)
+
+        # Adding the first value of company name and folio number as Series
         df['Company Name'] = pd.Series([co[0]] * len(df), index=df.index)
         df['Folio Number'] = pd.Series([folio[0]] * len(df), index=df.index)
-        df['ISIN Number'] = pd.Series(isin_column, index=df.index)
+        
+        # Add ISIN Number column
+        df['ISIN Number'] = pd.Series(group_isin_map, index=df.index)
 
         # Save DataFrame to CSV
         csv_filename = f'{os.path.splitext(i)[0]}.csv'
