@@ -68,14 +68,15 @@ for i in os.listdir(file):
                     # Call INSInum to get ISIN numbers
                     isin_numbers = INSInum(a)
 
-                    # Ensure each transaction group in `u` is assigned an ISIN number
-                    if isin_numbers:
-                        extended_isin_numbers = (isin_numbers * ((len(u) // len(isin_numbers)) + 1))[:len(u)]
-                        isin_column.extend(extended_isin_numbers)
-                    else:
-                        isin_column.extend([""] * len(u))  # Add empty ISINs if none found
+                    # If group length is greater than 1, assign one ISIN number to the entire group
+                    if len(u) > 1:
+                        if isin_numbers:
+                            assigned_isin = isin_numbers[0]
+                            isin_column.extend([assigned_isin] * len(u))
+                        else:
+                            isin_column.extend([""] * len(u))  # Add empty ISINs if none found
 
-                    print("ISIN numbers column after extending:", isin_column)  # Debugging line
+                    print("ISIN numbers column after assignment:", isin_column)  # Debugging line
 
             # Further processing...
             m = v[0][0]
