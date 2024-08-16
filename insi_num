@@ -90,15 +90,23 @@ for i in os.listdir(file):
             all_groups.extend(groups)
             all_tran.extend(u)
 
-        # Creating the DataFrame with the extracted data
-        df = pd.DataFrame(all_groups)
-        df.columns = ['Amount(INR)', 'NAV(INR)', 'Price(INR)', 'No_of_Unit', 'Balance_Unit', 'Date']
-        df['Transaction Type'] = pd.Series(all_tran)
-        df['Company Name'] = pd.Series([co[0]] * len(df), index=df.index)
-        df['Folio Number'] = pd.Series([folio[0]] * len(df), index=df.index)
-        df['ISIN Number'] = pd.Series([isin_column[i//len(u)] for i in range(len(df))], index=df.index)
+        # Create a dictionary to store the data
+        data = {
+            'Amount(INR)': [group[0] for group in all_groups],
+            'NAV(INR)': [group[1] for group in all_groups],
+            'Price(INR)': [group[2] for group in all_groups],
+            'No_of_Unit': [group[3] for group in all_groups],
+            'Balance_Unit': [group[4] for group in all_groups],
+            'Date': [group[5] for group in all_groups],
+            'Transaction Type': all_tran,
+            'Company Name': [co[0]] * len(all_groups),
+            'Folio Number': [folio[0]] * len(all_groups),
+            'ISIN Number': isin_column
+        }
+
+        # Create the DataFrame
+        df = pd.DataFrame(data)
 
         # Save DataFrame to CSV
         csv_filename = f'{os.path.splitext(i)[0]}.csv'
         csv_path = os.path.join(output_folder, csv_filename)
-        df.to_csv(csv_path, index=False)
