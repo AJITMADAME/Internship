@@ -50,9 +50,8 @@ for i in os.listdir(file):
             print(j)
             df = pd.read_excel(xls, sheet_name=j, header=None)
             a = df.values.tolist()
-            
-            for row in a[0:2]:
-                s = str(row)
+            for i in a[0:2]:
+                s = str(i)
                 vector1 = text_to_vector(predefined_string)
                 vector2 = text_to_vector(s)
                 cosine = get_cosine(vector1, vector2)
@@ -65,12 +64,16 @@ for i in os.listdir(file):
                     u = transaction_type(removed_items)
                     print("Transaction types (u):", u)  # Debugging line
                     all_tran.extend(u)
-                
-                    # Check condition before calling INSInum
+                    
+                    # Ensure each group in `u` corresponds to one ISIN number
                     if len(u) > 1:
                         print("Calling INSInum with data:", a)  # Debugging line
                         isin_numbers = INSInum(a)
-                        isin_column.extend([isin_numbers] * len(u))  # List of lists
+                        # Extend ISIN numbers to match the length of transaction types
+                        if len(isin_numbers) >= len(u):
+                            isin_column.extend(isin_numbers[:len(u)])
+                        else:
+                            isin_column.extend(isin_numbers + [""] * (len(u) - len(isin_numbers)))
                         print("ISIN numbers column after extending:", isin_column)  # Debugging line
 
             # Further processing...
@@ -84,32 +87,20 @@ for i in os.listdir(file):
 
             all_groups.extend(groups)
 
-        # Remove empty lists from isin_column
-        isin_column = [item for sublist in isin_column for item in sublist if item]
+        # Creating the DataFrame with the extracted data
+        df = pd.DataFrame(all_groups)
+        df.columns = ['Amount(INR)', 'NAV(INR)', 'Price(INR)', 'No_of_Unit', 'Balance_Unit', 'Date']
+        df['Transaction Type'] = pd.Series(all_tran)
 
-        # Ensure that the length of isin_column matches the length of all_groups
-        if len(isin_column) == len(all_groups):
-            df = pd.DataFrame(all_groups)
-            df.columns = ['Amount(INR)', 'NAV(INR)', 'Price(INR)', 'No_of_Unit', 'Balance_Unit', 'Date']
-            df['Transaction Type'] = pd.Series(all_tran)
-            
-            # Adding the first value of company name and folio number as Series
-            df['Company Name'] = pd.Series([co[0]] * len(df), index=df.index)
-            df['Folio Number'] = pd.Series([folio[0]] * len(df), index=df.index)
-            
-            # Add ISIN Number column
+        # Adding the first value of company name and folio number as Series
+        df['Company Name'] = pd.Series([co[0]] * len(df), index=df.index)
+        df['Folio Number'] = pd.Series([folio[0]] * len(df), index=df.index)
+        
+        # Add ISIN Number column
+        if len(isin_column) == len(df):
             df['ISIN Number'] = pd.Series(isin_column, index=df.index)
         else:
             print(f"ISIN Column Length: {len(isin_column)}, DataFrame Length: {len(df)}")  # Debugging line
-            df = pd.DataFrame(all_groups)
-            df.columns = ['Amount(INR)', 'NAV(INR)', 'Price(INR)', 'No_of_Unit', 'Balance_Unit', 'Date']
-            df['Transaction Type'] = pd.Series(all_tran)
-            
-            # Adding the first value of company name and folio number as Series
-            df['Company Name'] = pd.Series([co[0]] * len(df), index=df.index)
-            df['Folio Number'] = pd.Series([folio[0]] * len(df), index=df.index)
-            
-            # Add ISIN Number column with empty strings
             df['ISIN Number'] = pd.Series([""] * len(df), index=df.index)
 
         # Save DataFrame to CSV
