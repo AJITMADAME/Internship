@@ -44,7 +44,7 @@ for i in os.listdir(file):
         table_name = xls.sheet_names
         all_groups = []
         all_tran = []
-        group_isin_map = []  # To map each group to an ISIN number
+        expanded_isin_column = []  # To store the expanded ISIN numbers
 
         for j in table_name:
             print(j)
@@ -77,10 +77,9 @@ for i in os.listdir(file):
                         elif len(isin_numbers) > len(u):
                             isin_numbers = isin_numbers[:len(u)]
 
-                        # Create a list where each ISIN number is repeated according to the length of u
-                        extended_isin_numbers = [num for num in isin_numbers for _ in range(len(u))]
-                        group_isin_map.extend(extended_isin_numbers)
-                        print("Extended ISIN numbers column after mapping:", group_isin_map)  # Debugging line
+                        # Expand ISIN numbers to match length of u
+                        expanded_isin_column.extend(isin_numbers * len(u))
+                        print("Expanded ISIN numbers column after extending:", expanded_isin_column)  # Debugging line
 
                     # Create groups
                     m = v[0][0] if v else ""
@@ -88,11 +87,11 @@ for i in os.listdir(file):
                     groups = create_groups(b2, start_position)
                     all_groups.extend(groups)
 
-        # Ensure each group has one ISIN number
-        if len(all_groups) > len(group_isin_map):
-            group_isin_map.extend([""] * (len(all_groups) - len(group_isin_map)))
-        elif len(all_groups) < len(group_isin_map):
-            group_isin_map = group_isin_map[:len(all_groups)]
+        # Adjust the length of expanded_isin_column to match all_groups
+        if len(all_groups) > len(expanded_isin_column):
+            expanded_isin_column.extend([""] * (len(all_groups) - len(expanded_isin_column)))
+        elif len(all_groups) < len(expanded_isin_column):
+            expanded_isin_column = expanded_isin_column[:len(all_groups)]
 
         # Creating the DataFrame with the extracted data
         df = pd.DataFrame(all_groups)
@@ -104,7 +103,7 @@ for i in os.listdir(file):
         df['Folio Number'] = pd.Series([folio[0]] * len(df), index=df.index)
         
         # Add ISIN Number column
-        df['ISIN Number'] = pd.Series(group_isin_map, index=df.index)
+        df['ISIN Number'] = pd.Series(expanded_isin_column, index=df.index)
 
         # Save DataFrame to CSV
         csv_filename = f'{os.path.splitext(i)[0]}.csv'
