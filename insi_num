@@ -50,8 +50,9 @@ for i in os.listdir(file):
             print(j)
             df = pd.read_excel(xls, sheet_name=j, header=None)
             a = df.values.tolist()
-            for i in a[0:2]:
-                s = str(i)
+            
+            for row in a[0:2]:
+                s = str(row)
                 vector1 = text_to_vector(predefined_string)
                 vector2 = text_to_vector(s)
                 cosine = get_cosine(vector1, vector2)
@@ -63,20 +64,14 @@ for i in os.listdir(file):
                     b2 = cleaned_data(removed_items)
                     u = transaction_type(removed_items)
                     print("Transaction types (u):", u)  # Debugging line
-                    
+                    all_tran.extend(u)
+                
                     # Check condition before calling INSInum
                     if len(u) > 1:
                         print("Calling INSInum with data:", a)  # Debugging line
                         isin_numbers = INSInum(a)
-                        isin_numbers = [x for x in isin_numbers if x]  # Remove empty lists
-                        if len(isin_numbers) > 0:
-                            isin_number = isin_numbers[0]
-                            isin_column.append([isin_number] * len(u))  # Assign one ISIN number per group
-                            print("ISIN numbers column after extending:", isin_column)  # Debugging line
-                        else:
-                            isin_column.append([""] * len(u))  # Add empty string if no ISIN number found
-                    else:
-                        isin_column.append([""] * len(u))  # Add empty string if len(u) <= 1
+                        isin_column.extend([isin_numbers] * len(u))  # List of lists
+                        print("ISIN numbers column after extending:", isin_column)  # Debugging line
 
             # Further processing...
             m = v[0][0]
@@ -88,24 +83,34 @@ for i in os.listdir(file):
                 groups = create_groups(b2, start_position)
 
             all_groups.extend(groups)
-            all_tran.extend(u)
 
-        # Create a dictionary to store the data
-        data = {
-            'Amount(INR)': [group[0] for group in all_groups],
-            'NAV(INR)': [group[1] for group in all_groups],
-            'Price(INR)': [group[2] for group in all_groups],
-            'No_of_Unit': [group[3] for group in all_groups],
-            'Balance_Unit': [group[4] for group in all_groups],
-            'Date': [group[5] for group in all_groups],
-            'Transaction Type': all_tran,
-            'Company Name': [co[0]] * len(all_groups),
-            'Folio Number': [folio[0]] * len(all_groups),
-            'ISIN Number': [item for sublist in isin_column for item in sublist]
-        }
+        # Remove empty lists from isin_column
+        isin_column = [item for sublist in isin_column for item in sublist if item]
 
-        # Create the DataFrame
-        df = pd.DataFrame(data)
+        # Ensure that the length of isin_column matches the length of all_groups
+        if len(isin_column) == len(all_groups):
+            df = pd.DataFrame(all_groups)
+            df.columns = ['Amount(INR)', 'NAV(INR)', 'Price(INR)', 'No_of_Unit', 'Balance_Unit', 'Date']
+            df['Transaction Type'] = pd.Series(all_tran)
+            
+            # Adding the first value of company name and folio number as Series
+            df['Company Name'] = pd.Series([co[0]] * len(df), index=df.index)
+            df['Folio Number'] = pd.Series([folio[0]] * len(df), index=df.index)
+            
+            # Add ISIN Number column
+            df['ISIN Number'] = pd.Series(isin_column, index=df.index)
+        else:
+            print(f"ISIN Column Length: {len(isin_column)}, DataFrame Length: {len(df)}")  # Debugging line
+            df = pd.DataFrame(all_groups)
+            df.columns = ['Amount(INR)', 'NAV(INR)', 'Price(INR)', 'No_of_Unit', 'Balance_Unit', 'Date']
+            df['Transaction Type'] = pd.Series(all_tran)
+            
+            # Adding the first value of company name and folio number as Series
+            df['Company Name'] = pd.Series([co[0]] * len(df), index=df.index)
+            df['Folio Number'] = pd.Series([folio[0]] * len(df), index=df.index)
+            
+            # Add ISIN Number column with empty strings
+            df['ISIN Number'] = pd.Series([""] * len(df), index=df.index)
 
         # Save DataFrame to CSV
         csv_filename = f'{os.path.splitext(i)[0]}.csv'
