@@ -30,7 +30,7 @@ for k in os.listdir(pdf_file):
     text = page.extract_text()
     folio1 = folio_number(text, patterns)
     folio.append(folio1)
-    r = (text.split('\n'))
+    r = text.split('\n')
     c = r[0:10]
     co.append(c[3])
 
@@ -50,8 +50,8 @@ for i in os.listdir(file):
             print(j)
             df = pd.read_excel(xls, sheet_name=j, header=None)
             a = df.values.tolist()
-            for i in a[0:2]:
-                s = str(i)
+            for row in a[0:2]:
+                s = str(row)
                 vector1 = text_to_vector(predefined_string)
                 vector2 = text_to_vector(s)
                 cosine = get_cosine(vector1, vector2)
@@ -64,17 +64,19 @@ for i in os.listdir(file):
                     u = transaction_type(removed_items)
                     print("Transaction types (u):", u)  # Debugging line
                     all_tran.extend(u)
-                    
-                    # Ensure each group in `u` corresponds to one ISIN number
-                    if len(u) > 1:
-                        print("Calling INSInum with data:", a)  # Debugging line
-                        isin_numbers = INSInum(a)
-                        # Extend ISIN numbers to match the length of transaction types
-                        if len(isin_numbers) >= len(u):
-                            isin_column.extend(isin_numbers[:len(u)])
-                        else:
-                            isin_column.extend(isin_numbers + [""] * (len(u) - len(isin_numbers)))
-                        print("ISIN numbers column after extending:", isin_column)  # Debugging line
+                
+                    # Call INSInum to get ISIN numbers
+                    isin_numbers = INSInum(a)
+
+                    # Check if we have at least one ISIN number
+                    if isin_numbers:
+                        # Repeat ISIN numbers to match the length of transaction groups
+                        extended_isin_numbers = isin_numbers * len(u)
+                        isin_column.extend(extended_isin_numbers[:len(u)])
+                    else:
+                        isin_column.extend([""] * len(u))  # Add empty ISINs if none found
+
+                    print("ISIN numbers column after extending:", isin_column)  # Debugging line
 
             # Further processing...
             m = v[0][0]
