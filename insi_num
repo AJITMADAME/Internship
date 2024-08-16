@@ -9,7 +9,7 @@ pdf_file = "D:/Python/ajit/text_extract/try2/try6/new_pdf"
 folio = []
 co = []
 
-# INSInum function
+# INSInum function to extract ISIN numbers
 def INSInum(s):
     v = []
     for i in s:
@@ -68,11 +68,10 @@ for i in os.listdir(file):
                     # Call INSInum to get ISIN numbers
                     isin_numbers = INSInum(a)
 
-                    # Check if we have at least one ISIN number
+                    # Ensure each transaction group in `u` is assigned an ISIN number
                     if isin_numbers:
-                        # Repeat ISIN numbers to match the length of transaction groups
-                        extended_isin_numbers = isin_numbers * len(u)
-                        isin_column.extend(extended_isin_numbers[:len(u)])
+                        extended_isin_numbers = (isin_numbers * ((len(u) // len(isin_numbers)) + 1))[:len(u)]
+                        isin_column.extend(extended_isin_numbers)
                     else:
                         isin_column.extend([""] * len(u))  # Add empty ISINs if none found
 
