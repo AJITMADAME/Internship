@@ -8,16 +8,7 @@ pdf_file = "D:/Python/ajit/text_extract/try2/try6/new_pdf"
 
 folio = []
 co = []
-
-# INSInum function to extract ISIN numbers
-def INSInum(s):
-    v = []
-    for i in s:
-        for j in i.split("/"):
-            for k in es:
-                if k.lower().startswith("inf") or k.lower().startswith(" inf"):
-                    v.append(k)
-    return v
+    
 
 # Loop through PDF files to extract folio numbers and company names
 for k in os.listdir(pdf_file):
@@ -42,7 +33,6 @@ for i in os.listdir(file):
         xls = pd.ExcelFile(xl_path)
         table_name = xls.sheet_names
         all_groups = []
-        all_tran = []
         isin_column = []  # To store the ISIN numbers
 
         for j in table_name:
@@ -60,34 +50,27 @@ for i in os.listdir(file):
                     z1 = filter_digit_starting_items(q)
                     removed_items = process_exit_load(z1)
                     b2 = cleaned_data(removed_items)
-                    u = transaction_type(removed_items)
-                    all_tran.extend(u)
-                
+
                     # Call INSInum to get ISIN numbers
                     isin_numbers = INSInum(a)
                     
-                    # For each group `u`, assign one ISIN number
-                    if isin_numbers:
-                        assigned_isin = isin_numbers[0]  # Take the first ISIN number
-                        isin_column.extend([assigned_isin] * len(u))  # Assign it to the entire group
-                    else:
-                        isin_column.extend([""] * len(u))  # Add empty ISINs if none found
+                    # Append each ISIN number individually
+                    for isin in isin_numbers:
+                        isin_column.append(isin)
 
-            # Further processing...
+            # Determine the start position for creating groups
             m = v[0][0]
             if m[1:].isdigit():
                 start_position = 2
-                groups = create_groups(b2, start_position)
             else:
                 start_position = 0
-                groups = create_groups(b2, start_position)
 
+            # Create groups and extend all_groups
+            groups = create_groups(b2, start_position)
             all_groups.extend(groups)
 
         # Creating the DataFrame with the extracted data
-        df = pd.DataFrame(all_groups)
-        df.columns = ['Amount(INR)', 'NAV(INR)', 'Price(INR)', 'No_of_Unit', 'Balance_Unit', 'Date']
-        df['Transaction Type'] = pd.Series(all_tran)
+        df = pd.DataFrame(all_groups, columns=['Amount(INR)', 'NAV(INR)', 'Price(INR)', 'No_of_Unit', 'Balance_Unit', 'Date'])
 
         # Adding the first value of company name and folio number as Series
         df['Company Name'] = pd.Series([co[0]] * len(df), index=df.index)
