@@ -63,13 +63,12 @@ for i in os.listdir(file):
                     u = transaction_type(removed_items)
                     all_tran.extend(u)
                 
-                    # Call INSInum to get ISIN numbers
+                    # Call INSInum to get ISIN numbers and assign directly
                     isin_numbers = INSInum(a)
 
-                    # If group length is greater than 1, assign one ISIN number to the entire group
-                    if len(u) > 1 and isin_numbers:
+                    if isin_numbers:
                         assigned_isin = isin_numbers[0]  # Take the first ISIN number
-                        isin_column.extend([assigned_isin] * len(u))  # Assign it to the entire group
+                        isin_column.extend([assigned_isin] * len(u))  # Assign it to all items in `u`
                     else:
                         isin_column.extend([""] * len(u))  # Add empty ISINs if none found
 
