@@ -1,3 +1,34 @@
+import re
+
+# Example text (adjust this according to your actual text)
+text = """
+Here are some examples:
+pageFolio 33291415 / 30, 
+1234Folio 2345678912, 
+pageFolio98765432/12, 
+pageFolio 98765432 / 12.
+"""
+
+# Updated regex pattern
+pattern = r'(pageFolio|\d+Folio)\s*\d{8,10}(?:\s*/\s*\d{1,2})?'
+
+# Compile the regex pattern with verbose flag for better debugging
+compiled_pattern = re.compile(pattern, re.VERBOSE)
+
+# Find all matches
+matches = compiled_pattern.finditer(text)
+
+# Print each match for debugging
+for match in matches:
+    print(f"Full match: {match.group(0)}")
+    
+# Check for no matches
+if not any(matches):
+    print("No matches found.")
+
+
+
+
 
 import re
 
