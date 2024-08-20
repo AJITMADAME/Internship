@@ -35,51 +35,56 @@ for i in os.listdir(file):
         xls = pd.ExcelFile(xl_path)
         table_name = xls.sheet_names
         df = pd.read_excel(xls, sheet_name=table_name[0], header=None)
+        
+        # Process the Excel file
+        all_groups = []
+        all_tran = []
+        all_isni = []
+        insi = []
+        for j in table_name:
+            print(j)
+            xls = pd.ExcelFile(xl_path)
+            df1 = pd.read_excel(xls, sheet_name="Page 1 Table 1", header=None)
+            a1 = df1.values.tolist()
+            c = company_name(a1)
+            df = pd.read_excel(xls, sheet_name=j, header=None)
+            a = df.values.tolist()
+            for l in a[0:2]:
+                s = str(l)
+                vector1 = text_to_vector(predefined_string)
+                vector2 = text_to_vector(s)
+                cosine = get_cosine(vector1, vector2)
+                if cosine >= 0.07:
+                    q = removed_lien(a)
+                    v = process_e1(q)
+                    z1 = filter_digit_starting_items(v)
+                    removed_items = process_exit_load(z1)
+                    b2 = cleaned_data(removed_items)
+                    u = transaction_type(removed_items)
+                    all_tran.extend(u)
+                    ins = insi_num(a)
+                    if len(u) >= 1:
+                        insi.append(ins)
+                    empty_list = [x for x in insi if x != []]
+                    if len(u) < len(empty_list):
+                        empty_list.pop(0)
+                    m = v[0][0]
+                    if m[:1].isdigit():
+                        start_position = 2
+                        print('start_position_0')
+                        groups = create_groups(b2, start_position)
+                    else:
+                        start_position = 0
+                        groups = create_groups(b2, start_position)
+                        print('start_position_1')
+                    all_groups.extend(groups)
+                    all_isni.extend(empty_list * len(groups))
+        
+        # Create DataFrame using all_groups
+        df = pd.DataFrame(all_groups)
+        
+        # Check if DataFrame has more than 2 columns
         if df.shape[1] > 2:
-            # Process the Excel file
-            all_groups = []
-            all_tran = []
-            all_isni = []
-            insi = []
-            for j in table_name:
-                print(j)
-                xls = pd.ExcelFile(xl_path)
-                df1 = pd.read_excel(xls, sheet_name="Page 1 Table 1", header=None)
-                a1 = df1.values.tolist()
-                c = company_name(a1)
-                df = pd.read_excel(xls, sheet_name=j, header=None)
-                a = df.values.tolist()
-                for l in a[0:2]:
-                    s = str(l)
-                    vector1 = text_to_vector(predefined_string)
-                    vector2 = text_to_vector(s)
-                    cosine = get_cosine(vector1, vector2)
-                    if cosine >= 0.07:
-                        q = removed_lien(a)
-                        v = process_e1(q)
-                        z1 = filter_digit_starting_items(v)
-                        removed_items = process_exit_load(z1)
-                        b2 = cleaned_data(removed_items)
-                        u = transaction_type(removed_items)
-                        all_tran.extend(u)
-                        ins = insi_num(a)
-                        if len(u) >= 1:
-                            insi.append(ins)
-                        empty_list = [x for x in insi if x != []]
-                        if len(u) < len(empty_list):
-                            empty_list.pop(0)
-                        m = v[0][0]
-                        if m[:1].isdigit():
-                            start_position = 2
-                            print('start_position_0')
-                            groups = create_groups(b2, start_position)
-                        else:
-                            start_position = 0
-                            groups = create_groups(b2, start_position)
-                            print('start_position_1')
-                        all_groups.extend(groups)
-                        all_isni.extend(empty_list * len(groups))
-            df = pd.DataFrame(all_groups)
             print(xls)
             df.columns = ['Amount (INR)', 'NAV(INR)', 'Price(INR)', 'No_of_Unit', 'Balance Limit', 'Date']
             df['Company Name'] = pd.Series([c[0]] * len(df), index=df.index)
@@ -89,3 +94,9 @@ for i in os.listdir(file):
             c.pop(0)
             folio.pop(0)
             print(df)
+            
+            # Remove PDF file based on Excel file path
+            pdf_file_path = os.path.join(pdf_file, f"{os.path.splitext(i)[0]}.pdf")
+            if os.path.exists(pdf_file_path):
+                os.remove(pdf_file_path)
+                print(f"Removed PDF file: {pdf_file_path}")
