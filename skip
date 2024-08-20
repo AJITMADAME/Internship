@@ -2,6 +2,7 @@ import os
 import re
 import pandas as pd
 import shutil
+from PyPDF2 import PdfReader
 
 # Define the patterns for extracting numbers
 patterns = r'\b\d{9}\b'
@@ -85,7 +86,10 @@ for i in os.listdir(file):
         df = pd.DataFrame(all_groups)
         
         # Extract folio number from the DataFrame
-        folio_number = df.iloc[0, 0]
+        if not df.empty:
+            folio_number = df.iloc[0, 0]
+        else:
+            folio_number = None
         
         # Check if DataFrame has more than 2 columns
         if df.shape[1] > 2:
