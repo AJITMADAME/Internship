@@ -1,97 +1,91 @@
 import os
 import re
 import pandas as pd
-from PyPDF2 import PdfReader
 
-def folio_num(pdf_file):
-    folio = []
-    patterns = r'(?:page|\d+)Folio\s*No\.\s*([\d\s/]+)'  
-    patterns1 = r'(?:page|\d+)Folio\s*No\.\s*(\d{8,10}\s*/\s*\d{1,3})'  
+# Define the patterns for extracting numbers
+patterns = r'\b\d{9}\b'
+patterns1 = r'\b\d{8}\b'
 
-    for k in os.listdir(pdf_file):
-        pdf_path = os.path.join(pdf_file, k)
-        reader = PdfReader(pdf_path)
-        page = reader.pages[0]
-        text = page.extract_text()
+# Initialize the folio list
+folio = []
 
-        numbers = re.findall(patterns, text)
-        if len(numbers) == 0:
-            folio1 = re.findall(patterns1, text)
-            folio.append(folio1)
-        else:
-            folio.append(numbers)
+# Iterate over the PDF files
+for k in os.listdir(pdf_file):
+    pdf_path = os.path.join(pdf_file, k)
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+    text = page.extract_text()
     
-    return folio
+    # Extract numbers from the page
+    numbers = re.findall(patterns, text)
+    if len(numbers) == 0:
+        folio1 = re.findall(patterns1, text)
+        folio.append(folio1)
+    else:
+        folio.append(numbers)
 
-# Folder paths
-pdf_folder = 'path_to_pdf_folder'
-excel_folder = 'path_to_excel_folder'
-output_folder = 'path_to_output_folder'
-
-for i in os.listdir(excel_folder):
-    xl_path = os.path.join(excel_folder, i)
+# Iterate over the Excel files
+for i in os.listdir(file):
+    xl_path = os.path.join(file, i)
     csv_filename = f"{os.path.splitext(i)[0]}.csv"
     csv_path = os.path.join(output_folder, csv_filename)
-
+    
+    # Check if the Excel file has more than 2 columns
     if xl_path.endswith("xlsx"):
         xls = pd.ExcelFile(xl_path)
-        all_groups = []
-        all_tran = []
-        all_isni = []
-        iii = []
-        isin_column = []
-
-        for j in xls.sheet_names:
-            df = pd.read_excel(xls, sheet_name=j, header=None)
-            a = df.values.tolist()
-
-            for item in a[0:2]:
-                s = str(item)
-                vector1 = text_to_vector(predefined_string)
-                vector2 = text_to_vector(s)
-                cosine = get_cosine(vector1, vector2)
-
-                if cosine >= 0.07:
-                    q = removed_lien(a)
-                    v = process_e1(q)
-                    z1 = filter_digit_starting_items(v)
-                    removed_items = process_exit_load(z1)
-                    b2 = cleaned_data(removed_items)
-                    u = transaction_type(removed_items)
-
-                    all_tran.extend(u)
-                    ins = insi_num(a)
-                    if len(u) >= 1:
-                        iii.append(ins)
-
-            empty_list = [x for x in iii if x != []]
-            if len(u) < len(empty_list):
-                empty_list.pop(0)
-
-            m = v[0][0]
-            start_position = 2 if m[:1].isdigit() else 0
-            groups = create_groups(b2, start_position)
-            all_groups.extend(groups)
-            all_isni.extend(empty_list * len(groups))
-
-        df = pd.DataFrame(all_groups)
-
-        if df.shape[1] > 2 and not df.empty:
-            fo = folio_num(pdf_folder)
-
-            df.columns = ['Amount (INR)', 'NAV(INR)', 'Price(INR)', 'No_of_Unit', 'Balance Unit', 'Date']
+        table_name = xls.sheet_names
+        df = pd.read_excel(xls, sheet_name=table_name[0], header=None)
+        if df.shape[1] > 2:
+            # Process the Excel file
+            all_groups = []
+            all_tran = []
+            all_isni = []
+            insi = []
+            for j in table_name:
+                print(j)
+                xls = pd.ExcelFile(xl_path)
+                df1 = pd.read_excel(xls, sheet_name="Page 1 Table 1", header=None)
+                a1 = df1.values.tolist()
+                c = company_name(a1)
+                df = pd.read_excel(xls, sheet_name=j, header=None)
+                a = df.values.tolist()
+                for l in a[0:2]:
+                    s = str(l)
+                    vector1 = text_to_vector(predefined_string)
+                    vector2 = text_to_vector(s)
+                    cosine = get_cosine(vector1, vector2)
+                    if cosine >= 0.07:
+                        q = removed_lien(a)
+                        v = process_e1(q)
+                        z1 = filter_digit_starting_items(v)
+                        removed_items = process_exit_load(z1)
+                        b2 = cleaned_data(removed_items)
+                        u = transaction_type(removed_items)
+                        all_tran.extend(u)
+                        ins = insi_num(a)
+                        if len(u) >= 1:
+                            insi.append(ins)
+                        empty_list = [x for x in insi if x != []]
+                        if len(u) < len(empty_list):
+                            empty_list.pop(0)
+                        m = v[0][0]
+                        if m[:1].isdigit():
+                            start_position = 2
+                            print('start_position_0')
+                            groups = create_groups(b2, start_position)
+                        else:
+                            start_position = 0
+                            groups = create_groups(b2, start_position)
+                            print('start_position_1')
+                        all_groups.extend(groups)
+                        all_isni.extend(empty_list * len(groups))
+            df = pd.DataFrame(all_groups)
+            print(xls)
+            df.columns = ['Amount (INR)', 'NAV(INR)', 'Price(INR)', 'No_of_Unit', 'Balance Limit', 'Date']
             df['Company Name'] = pd.Series([c[0]] * len(df), index=df.index)
-            df['Folio Number'] = pd.Series([fo[0]] * len(df), index=df.index)
+            df['Folio Number'] = pd.Series([folio[0]] * len(df), index=df.index)
             df['Transaction Type'] = pd.Series(all_tran)
             df['ISIN Number'] = pd.Series(all_isni)
-
             c.pop(0)
-            fo.pop(0)
-
-            df.to_csv(csv_path, index=False)
-            print(f"DataFrame created and saved for {i}")
-        else:
-            pdf_to_remove = os.path.join(pdf_folder, f"{os.path.splitext(i)[0]}.pdf")
-            if os.path.exists(pdf_to_remove):
-                os.remove(pdf_to_remove)
-                print(f"Removed PDF {pdf_to_remove} due to insufficient data.")
+            folio.pop(0)
+            print(df)
