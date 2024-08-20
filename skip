@@ -1,0 +1,120 @@
+for k in os.listdir(pdf_file):
+    pdf_path = os.path.join(pdf_file, k)
+    # print(pdf_path)
+
+    reader = PdfReader(pdf_path)
+    page = reader.pages[0]
+
+    # Extracting text from the page
+    text = page.extract_text()
+
+    numbers = re.findall(patterns, text)
+    if len(numbers) == 0:
+        folio1 = re.findall(patterns1, text)
+        # print(folio1, '==========-=-=-=-=-=-=-=--')
+        folio.append(folio1)
+    else:
+        folio.append(numbers)
+
+for i in os.listdir(file):
+    # Prepare paths and filenames
+    xl_path = os.path.join(file, i)
+    csv_filename = f"{os.path.splitext(i)[0]}.csv"
+    # print(csv_filename)
+
+    csv_path = os.path.join(output_folder, csv_filename)
+    # print(csv_path)
+
+    if xl_path.endswith("xlsx"):
+        xls = pd.ExcelFile(xl_path)
+        table_name = xls.sheet_names
+        all_groups = []
+        all_tran = []
+        all_isni = []
+        iii = []
+        isin_column = []  # To store the ISIN numbers
+
+        for j in table_name:
+            print(j)
+
+            df1 = pd.read_excel(xls, sheet_name="Page 1 Table 1", header=None)
+            a1 = df1.values.tolist()
+            # print(a1)
+
+            c = company_name(a1)
+            # print(c)
+
+            df = pd.read_excel(xls, sheet_name=j, header=None)
+            # print(df)
+
+            a = df.values.tolist()
+            # print(a)
+
+            for item in a[0:2]:
+                s = str(item)
+                vector1 = text_to_vector(predefined_string)
+                vector2 = text_to_vector(s)
+                cosine = get_cosine(vector1, vector2)
+                # print(cosine, 'ccccccccccccccccccccccccccc')
+
+                if cosine >= 0.07:
+                    q = removed_lien(a)
+                    v = process_e1(q)
+                    z1 = filter_digit_starting_items(v)
+                    removed_items = process_exit_load(z1)
+                    b2 = cleaned_data(removed_items)
+                    u = transaction_type(removed_items)
+                    # print(u, "transaction type--------------")
+                    # print("length of transaction type", len(u))
+
+                    all_tran.extend(u)
+                    # print(len(all_tran), 'length of all trans')
+
+                    ins = insi_num(a)
+                    if len(u) >= 1:
+                        iii.append(ins)
+
+            empty_list = [x for x in iii if x != []]
+            if len(u) < len(empty_list):
+                empty_list.pop(0)
+
+            m = v[0][0]
+            if m[:1].isdigit():
+                start_position = 2
+                print('start_position_0')
+                groups = create_groups(b2, start_position)
+            else:
+                start_position = 0
+                print('start_position_1')
+                groups = create_groups(b2, start_position)
+
+            all_groups.extend(groups)
+            all_isni.extend(empty_list * len(groups))
+
+        # Create DataFrame from all_groups
+        df = pd.DataFrame(all_groups)
+        # print(len(all_groups), 'length of all groups')
+
+        # Check if the DataFrame has more than 2 columns
+        if df.shape[1] > 2:
+            fo = folio_num(pdf_file)
+
+            df.columns = ['Amount (INR)', 'NAV(INR)', 'Price(INR)', 'No_of_Unit', 'Balance Unit', 'Date']
+
+            # Adding the first value of company name and folio number as Series
+            df['Company Name'] = pd.Series([c[0]] * len(df), index=df.index)
+            df['Folio Number'] = pd.Series([fo[0]] * len(df), index=df.index)
+
+            # Add Transaction Type and ISIN Number columns
+            df['Transaction Type'] = pd.Series(all_tran)
+            df['ISIN Number'] = pd.Series(all_isni)
+
+            # Remove the first element after it's added to the DataFrame
+            c.pop(0)
+            fo.pop(0)
+
+            print(df)
+        else:
+            # If the DataFrame has fewer than 2 columns or is empty, do not add folio number
+            print(f"Skipping file {i} due to insufficient data.")
+in this code what you changes
