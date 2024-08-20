@@ -1,5 +1,17 @@
 import re
 
+text = "The documents include pageFolio No. 275996734 / 92 and also references like 1234Folio No. 1234567890 / 77."
+
+# Extracting the 8 to 10 digit number and the number after the slash as a single string
+folios = re.findall(folio_regex, text)
+print("Extracted Folio Numbers:", folios)
+
+
+
+
+
+import re
+
 # Example text (adjust this according to your actual text)
 text = """
 Here are some examples:
