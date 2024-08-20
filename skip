@@ -84,16 +84,18 @@ for i in os.listdir(file):
         # Create DataFrame using all_groups
         df = pd.DataFrame(all_groups)
         
+        # Extract folio number from the DataFrame
+        folio_number = df.iloc[0, 0]
+        
         # Check if DataFrame has more than 2 columns
         if df.shape[1] > 2:
             print(xls)
             df.columns = ['Amount (INR)', 'NAV(INR)', 'Price(INR)', 'No_of_Unit', 'Balance Limit', 'Date']
             df['Company Name'] = pd.Series([c[0]] * len(df), index=df.index)
-            df['Folio Number'] = pd.Series([folio[0]] * len(df), index=df.index)
+            df['Folio Number'] = pd.Series([folio_number] * len(df), index=df.index)
             df['Transaction Type'] = pd.Series(all_tran)
             df['ISIN Number'] = pd.Series(all_isni)
             c.pop(0)
-            folio.pop(0)
             print(df)
             
             # Move PDF file to a new folder based on Excel file path
