@@ -4,27 +4,8 @@ import pandas as pd
 import shutil
 from PyPDF2 import PdfReader
 
-# Define the patterns for extracting numbers
-patterns = r'\b\d{9}\b'
-patterns1 = r'\b\d{8}\b'
-
 # Initialize the folio list
 folio = []
-
-# Iterate over the PDF files
-for k in os.listdir(pdf_file):
-    pdf_path = os.path.join(pdf_file, k)
-    reader = PdfReader(pdf_path)
-    page = reader.pages[0]
-    text = page.extract_text()
-    
-    # Extract numbers from the page
-    numbers = re.findall(patterns, text)
-    if len(numbers) == 0:
-        folio1 = re.findall(patterns1, text)
-        folio.append(folio1)
-    else:
-        folio.append(numbers)
 
 # Iterate over the Excel files
 for i in os.listdir(file):
@@ -36,19 +17,16 @@ for i in os.listdir(file):
     if xl_path.endswith("xlsx"):
         xls = pd.ExcelFile(xl_path)
         table_name = xls.sheet_names
-        df = pd.read_excel(xls, sheet_name=table_name[0], header=None)
+        df1 = pd.read_excel(xls, sheet_name="Page 1 Table 1", header=None)
+        a1 = df1.values.tolist()
+        c = company_name(a1)
         
-        # Process the Excel file
         all_groups = []
         all_tran = []
         all_isni = []
         insi = []
         for j in table_name:
             print(j)
-            xls = pd.ExcelFile(xl_path)
-            df1 = pd.read_excel(xls, sheet_name="Page 1 Table 1", header=None)
-            a1 = df1.values.tolist()
-            c = company_name(a1)
             df = pd.read_excel(xls, sheet_name=j, header=None)
             a = df.values.tolist()
             for l in a[0:2]:
@@ -85,26 +63,33 @@ for i in os.listdir(file):
         # Create DataFrame using all_groups
         df = pd.DataFrame(all_groups)
         
-        # Extract folio number from the DataFrame
-        if not df.empty:
-            folio_number = df.iloc[0, 0]
-        else:
-            folio_number = None
-        
         # Check if DataFrame has more than 2 columns
         if df.shape[1] > 2:
-            print(xls)
-            df.columns = ['Amount (INR)', 'NAV(INR)', 'Price(INR)', 'No_of_Unit', 'Balance Limit', 'Date']
-            df['Company Name'] = pd.Series([c[0]] * len(df), index=df.index)
-            df['Folio Number'] = pd.Series([folio_number] * len(df), index=df.index)
-            df['Transaction Type'] = pd.Series(all_tran)
-            df['ISIN Number'] = pd.Series(all_isni)
-            c.pop(0)
-            print(df)
-            
-            # Move PDF file to a new folder based on Excel file path
+            # Load PDF file
             pdf_file_path = os.path.join(pdf_file, f"{os.path.splitext(i)[0]}.pdf")
             if os.path.exists(pdf_file_path):
+                reader = PdfReader(pdf_file_path)
+                page = reader.pages[0]
+                text = page.extract_text()
+                
+                # Extract numbers from the page
+                numbers = re.findall(patterns, text)
+                if len(numbers) == 0:
+                    folio1 = re.findall(patterns1, text)
+                    folio.append(folio1)
+                else:
+                    folio.append(numbers)
+                
+                # Create final DataFrame
+                df.columns = ['Amount (INR)', 'NAV(INR)', 'Price(INR)', 'No_of_Unit', 'Balance Limit', 'Date']
+                df['Company Name'] = pd.Series([c[0]] * len(df), index=df.index)
+                df['Folio Number'] = pd.Series([folio[0][0]] * len(df), index=df.index)
+                df['Transaction Type'] = pd.Series(all_tran)
+                df['ISIN Number'] = pd.Series(all_isni)
+                c.pop(0)
+                print(df)
+                
+                # Move PDF file to a new folder based on Excel file path
                 new_folder = os.path.join(output_folder, "processed_pdfs")
                 if not os.path.exists(new_folder):
                     os.makedirs(new_folder)
