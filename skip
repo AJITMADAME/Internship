@@ -1,6 +1,7 @@
 import os
 import re
 import pandas as pd
+import shutil
 
 # Define the patterns for extracting numbers
 patterns = r'\b\d{9}\b'
@@ -95,8 +96,12 @@ for i in os.listdir(file):
             folio.pop(0)
             print(df)
             
-            # Remove PDF file based on Excel file path
+            # Move PDF file to a new folder based on Excel file path
             pdf_file_path = os.path.join(pdf_file, f"{os.path.splitext(i)[0]}.pdf")
             if os.path.exists(pdf_file_path):
-                os.remove(pdf_file_path)
-                print(f"Removed PDF file: {pdf_file_path}")
+                new_folder = os.path.join(output_folder, "processed_pdfs")
+                if not os.path.exists(new_folder):
+                    os.makedirs(new_folder)
+                new_pdf_path = os.path.join(new_folder, f"{os.path.splitext(i)[0]}.pdf")
+                shutil.move(pdf_file_path, new_pdf_path)
+                print(f"Moved PDF file to: {new_pdf_path}")
