@@ -1,3 +1,24 @@
+
+import re
+
+# Example text
+text = "Here are some examples: pageFolio 33291415 / 30, 1234Folio 2345678912, and pageFolio 98765432 / 12."
+
+# Updated regex pattern
+pattern = r'(pageFolio|\d+Folio)\s*\d{8,10}(?:\s*/\s*\d{1,2})?'
+
+# Find all matches
+matches = re.finditer(pattern, text)
+
+for match in matches:
+    print(f"Full match: {match.group(0)}")
+
+
+
+
+
+
+
 import re
 
 # Define the regex patterns for different date formats
