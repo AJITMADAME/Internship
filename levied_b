@@ -1,0 +1,8 @@
+def remove_lists_with_levied(list_of_lists):
+    # Use list comprehension to filter out sublists containing the word "Levied"
+    filtered_list = [sublist for sublist in list_of_lists if not any("Levied" in str(item) for item in sublist)]
+    return filtered_list
+
+# Example usage
+filtered_list = remove_lists_with_levied(list_of_lists)
+print(filtered_list)
