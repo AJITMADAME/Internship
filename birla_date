@@ -1,0 +1,26 @@
+import re
+
+def create_groups(data, start_position=0):
+    groups = []
+    length = len(data)
+    
+    # Define a regex pattern for the date (e.g., DD/MM/YYYY)
+    pattern = r'\d{2}/\d{2}/\d{4}'
+    
+    # Find the start position where the date appears in the list
+    for i in range(start_position, length):
+        if re.match(pattern, data[i]):
+            start_position = i
+            break
+    
+    # Iterate through the list in steps of 6 starting from the start position
+    for i in range(start_position, length, 6):
+        group = data[i:i+6]  # Get the next 6 items (including the date)
+        groups.append(group) # Append the group to the groups list
+    
+    return groups
+
+# Example usage
+data = ["Info1", "01/08/2024", "Value1", "Value2", "Value3", "Value4", "Value5", "Value6", "Info2"]
+groups = create_groups(data)
+print(groups)
