@@ -2,6 +2,75 @@
 import os
 import re
 import shutil
+import pandas as pd
+from PyPDF2 import PdfReader
+
+# Example variables (ensure these are defined appropriately in your actual code)
+# pdf_file = 'path_to_pdf_directory'
+# output_folder = 'path_to_output_directory'
+# csv_path = 'path_to_csv_file.csv'
+# df = pd.DataFrame()  # Replace with your actual DataFrame
+# folio11 = []
+# company_name = 'Example Company Name'
+
+# Check if DataFrame has more than 2 columns
+if df.shape[1] > 2:
+
+    # Iterate through files in the pdf_file directory
+    for n in os.listdir(pdf_file):
+        pdf_path = os.path.join(pdf_file, n)
+
+        # Check if the file is a PDF
+        if pdf_path.endswith('.pdf') and os.path.exists(pdf_path):
+            reader = PdfReader(pdf_path)
+            page = reader.pages[0]
+            text = page.extract_text()
+
+            # Extract folio numbers using regex
+            pattern = r'--\d{4}Folio\d{6} / \d{2}'  # Example pattern; adjust as needed
+            folio_numbers = re.findall(pattern, text)
+
+            # If folio numbers are found, append to the list
+            if folio_numbers:
+                folio11.append(folio_numbers)
+
+    # Create Final DataFrame columns
+    df.columns = ['Date', 'Amount (INR)', 'NAV (INR)', 'Price (INR)', 'Units', 'Balance']
+    
+    # Add Company Name and Folio Number columns
+    df['Company Name'] = pd.Series([company_name] * len(df), index=df.index)
+    df['Folio Number'] = pd.Series([folio11[0][0]] * len(df), index=df.index)
+
+    # Save DataFrame to a CSV file
+    df.to_csv(csv_path, index=False)
+
+    # Move PDF file to a new folder based on the Excel file path
+    new_folder = os.path.join(output_folder, "processed_pdfs")
+    if not os.path.exists(new_folder):
+        os.makedirs(new_folder)
+
+    # Ensure 'n' is a string (name of the current file)
+    new_pdf_path = os.path.join(new_folder, f"{os.path.splitext(n)[0]}.pdf")
+    shutil.move(pdf_path, new_pdf_path)
+
+    print(f"Moved PDF file to: {new_pdf_path}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import os
+import re
+import shutil
 
 # Directory containing the PDF files
 directory = "/path/to/your/pdf_directory"
