@@ -2,6 +2,35 @@
 
 import re
 
+def extract_from_date(data_list):
+    # Combine the list into a single string with spaces between elements
+    data_str = ' '.join(data_list)
+    
+    # Define a regex pattern for the date (e.g., DD/MM/YYYY) and the next 5 values
+    pattern = r'(\d{2}/\d{2}/\d{4})(\s\S+){5}'
+    
+    # Search for the pattern in the string
+    match = re.search(pattern, data_str)
+    
+    if match:
+        # Extract the matching portion and split it back into a list
+        extracted_values = match.group().split()
+        return extracted_values
+    else:
+        return None
+
+# Example usage
+extracted_values = extract_from_date(data_list)
+print(extracted_values)
+
+
+
+
+
+
+
+import re
+
 def extract_from_date_list_of_lists(list_of_lists):
     result = []
     # Define a regex pattern for the date (e.g., DD/MM/YYYY)
