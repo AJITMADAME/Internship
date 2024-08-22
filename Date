@@ -1,3 +1,32 @@
+import re
+
+def extract_values_from_date_regex(data_list):
+    # Combine the list into a single string with spaces between elements
+    data_str = ' '.join(data_list)
+    
+    # Define a regex pattern for the date (e.g., YYYY-MM-DD) and the next 5 values
+    pattern = r'(\d{4}-\d{2}-\d{2})(\s\S+){5}'
+    
+    # Find all matches for the pattern in the string
+    matches = re.findall(pattern, data_str)
+    
+    # Process each match to extract the date and the following values
+    extracted_values = []
+    for match in matches:
+        # match[0] is the date, match[1] is the remaining part
+        values = match[0] + match[1]  # Combine date with the next 5 values
+        values_list = values.split()  # Convert the string back to a list
+        extracted_values.append(values_list)
+    
+    return extracted_values
+
+# Example usage
+data_list = [
+    "Info", "2024-08-21", "Value1", "Value2", "Value3", "Value4", "Value5", "Extra",
+    "Other", "2024-08-22", "ValueA", "ValueB", "ValueC", "ValueD", "ValueE", "More"
+]
+extracted_values = extract_values_from_date_regex(data_list)
+print(extracted_values)
 
 
 import re
