@@ -1,3 +1,45 @@
+
+
+import re
+
+def extract_from_date_list_of_lists(list_of_lists):
+    result = []
+    # Define a regex pattern for the date (e.g., DD/MM/YYYY)
+    pattern = r'\d{2}/\d{2}/\d{4}'
+    
+    for sublist in list_of_lists:
+        # Combine the sublist into a single string with spaces between elements
+        data_str = ' '.join(sublist)
+        
+        # Search for the date pattern in the string
+        match = re.search(pattern, data_str)
+        
+        if match:
+            # Find the index of the date in the original sublist
+            date_index = sublist.index(match.group())
+            # Extract the date and the next 5 values
+            extracted_values = sublist[date_index:date_index+6]
+            result.append(extracted_values)
+    
+    return result
+
+# Example usage
+extracted_lists = extract_from_date_list_of_lists(list_of_lists)
+print(extracted_lists)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 folio_regex = r'(?:page|\d+)Folio\s*No\.\s*(\d{8,10}\s*/\s*\d{1,3})'
 
 
