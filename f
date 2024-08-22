@@ -1,18 +1,21 @@
 import re
 
 def extract_folio_number(text):
-    # Define the regex pattern to match the folio number in different formats
-    pattern = r'Folio Number:\s*(\d{8,10}(?:\s*/\s*\d{1,3})?)'
+    # Define multiple regex patterns to match various formats of the folio number
+    patterns = [
+        r'Folio Number:\s*(\d{8,10}(?:\s*/\s*\d{1,3})?)',  # Matches 1017662402 or 1017662402 / 12 or 1017662402 / 23
+        r'Folio Number:\s*(\d+ / \S+|\d+)'                 # Matches 1017662402 or 1017662402 / some text
+    ]
     
-    # Search for the pattern in the text
-    match = re.search(pattern, text)
+    # Try each pattern in order
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if match:
+            # Extract the folio number if a match is found
+            return match.group(1)
     
-    if match:
-        # Extract the folio number
-        folio_number = match.group(1)
-        return folio_number
-    else:
-        return None
+    # If no patterns match, return None
+    return None
 
 # Example usage
 text = """
