@@ -1,4 +1,50 @@
 
+import os
+import re
+import shutil
+
+# Directory containing the PDF files
+directory = "/path/to/your/pdf_directory"
+
+# Destination directory where renamed files will be copied
+destination_directory = "/path/to/your/destination_directory"
+
+# Ensure the destination directory exists
+os.makedirs(destination_directory, exist_ok=True)
+
+# Loop through all files in the directory
+for filename in os.listdir(directory):
+    # Check if the file is a PDF
+    if filename.endswith(".pdf"):
+        # Extract digits from the filename
+        match = re.search(r'\b(\d{10})\b', filename)
+        if match:
+            # Extracted digit
+            digit = match.group(1)
+            
+            # Construct the new file name
+            new_filename = f"{digit}.pdf"
+            
+            # Define full file paths
+            old_file_path = os.path.join(directory, filename)
+            new_file_path = os.path.join(destination_directory, new_filename)
+            
+            # Copy and rename the file
+            shutil.copy(old_file_path, new_file_path)
+            print(f"Copied and renamed: {filename} -> {new_filename}")
+
+
+
+
+
+
+
+
+
+
+
+
+
 import re
 
 # Sample text
