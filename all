@@ -1,0 +1,82 @@
+import os
+import re
+import pandas as pd
+from PyPDF2 import PdfReader
+
+# Define the path to your PDF files and output
+pdf_file_folder = r"D:\Python\ajit\birla\rename_pdf"
+output_folder = r"D:\Python\ajit\birla\sample_csv"
+
+# Define a pattern to search for in the text
+pattern = r"INF209"
+folio_numbers_pattern = r'Folio Number\s*:\s*(\d+(?:\s*/\s*\d+)?)'
+
+# Initialize lists to store results
+inf = []
+folio_list = []
+
+# Function to process text from PDFs
+def process_pdf_text(pdf_path):
+    reader = PdfReader(pdf_path)
+    num_pages = len(reader.pages)
+    combined_text = ""
+    
+    for i in range(num_pages):
+        page = reader.pages[i]
+        text = page.extract_text()
+        if text:
+            combined_text += text
+    
+    return combined_text
+
+# Function to extract relevant information from text
+def extract_info_from_text(tes):
+    tes = tes.replace(',', '').replace("(", "").replace(')', '').replace("NAV", "")
+    indices = [m.start(0) for m in re.finditer(pattern, tes)]
+
+    extracted_data = []
+    for i in indices:
+        vv = tes[i:i+300]
+        if "Redemption" in vv or "Purchase" in vv:
+            vb = tes[i:i+13]
+            vvv = vb.replace('\n', "")
+            extracted_data.append(vvv)
+    
+    return extracted_data
+
+# Process each PDF in the specified folder
+for pdf_file in os.listdir(pdf_file_folder):
+    pdf_path = os.path.join(pdf_file_folder, pdf_file)
+    print(f"Processing PDF: {pdf_path}")
+    
+    if pdf_path.endswith(".pdf"):
+        # Extract text from PDF
+        text = process_pdf_text(pdf_path)
+
+        # Extract folio numbers
+        folio_numbers = re.findall(folio_numbers_pattern, text)
+        folio_list.extend(folio_numbers)
+
+        # Extract relevant information based on your criteria
+        extracted_info = extract_info_from_text(text)
+        inf.extend(extracted_info)
+
+# Create final DataFrame
+df = pd.DataFrame(columns=['Date', 'Amount (INR)', 'NAV (INR)', 'Price (INR)', 'No_of_Unit', 'Balance_Unit'])
+
+# Assuming you have already defined `all_tran`, `c2`, and other lists required for DataFrame creation
+df['Transaction Type'] = pd.Series(all_tran)
+df['Company Name'] = pd.Series([c2[0]] * len(df), index=df.index)
+
+# Assuming `folio_list` and `inf` have valid values
+if folio_list:
+    df['Folio Number'] = pd.Series([folio_list[0]] * len(df), index=df.index)
+if inf:
+    df['ISIN Number'] = pd.Series(inf)
+
+print(df)
+
+# Save the DataFrame to CSV
+csv_path = os.path.join(output_folder, "final_output.csv")
+df.to_csv(csv_path, index=False)
+print(f"Data saved to {csv_path}")
