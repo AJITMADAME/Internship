@@ -7,127 +7,95 @@ from PyPDF2 import PdfReader
 excel_folder = r"D:\Python\ajit\birla\rename_excel"
 pdf_file_folder = r"D:\Python\ajit\birla\rename_pdf"
 output_folder = r"D:\Python\ajit\birla\sample_csv"
-new_pdf_path = r"D:\Python\ajit\birla\moved"
 
-# Regular expression patterns
+# Regular expression patterns for extracting Folio and ISIN numbers
 folio_numbers_pattern = r'Folio Number\s*:\s*(\d+(?:\s*/\s*\d+)?)'
 isin_pattern = r"INF209"
-
-# Lists to store extracted data
-inf = []
-folio_list = []
 
 def process_pdf_text(pdf_path):
     """
     Function to extract text from all pages of a given PDF.
     """
     reader = PdfReader(pdf_path)
-    num_pages = len(reader.pages)
     combined_text = ""
     
-    for i in range(num_pages):
-        page = reader.pages[i]
+    for page in reader.pages:
         text = page.extract_text()
         if text:
             combined_text += text
     
     return combined_text
 
-def extract_info_from_text(tes):
+def extract_isin_from_text(text):
     """
-    Function to extract relevant ISIN-related information from text.
+    Function to extract ISIN numbers from the PDF text.
     """
-    tes = tes.replace(',', '').replace("(", "").replace(')', '').replace("NAV", "")
-    indices = [m.start(0) for m in re.finditer(isin_pattern, tes)]
-
-    extracted_data = []
-    for i in indices:
-        vv = tes[i:i+300]
-        if "Redemption" in vv or "Purchase" in vv:
-            vb = tes[i:i+13]
-            vvv = vb.replace('\n', "")
-            extracted_data.append(vvv)
+    indices = [m.start(0) for m in re.finditer(isin_pattern, text)]
+    extracted_isin = []
     
-    return extracted_data
+    for i in indices:
+        snippet = text[i:i+300]
+        if "Redemption" in snippet or "Purchase" in snippet:
+            isin_number = text[i:i+13].replace('\n', "")
+            extracted_isin.append(isin_number)
+    
+    return extracted_isin
 
-# Loop through each Excel file
+# Loop through each Excel file to create groups and extract ISIN numbers from the corresponding PDF
 for excel_file in os.listdir(excel_folder):
     xl_path = os.path.join(excel_folder, excel_file)
-    print(f"Processing Excel: {xl_path}")
     
     if xl_path.endswith(".xlsx"):
         xls = pd.ExcelFile(xl_path)
-        table_names = xls.sheet_names
-        
         all_groups = []
-        all_tran = []
+        all_transactions = []
         c2 = []
-
-        for sheet in table_names:
+        
+        # Extract all groups from Excel
+        for sheet in xls.sheet_names:
             df = pd.read_excel(xls, sheet_name=sheet, header=None)
             data_list = df.values.tolist()
 
-            # Assuming a function `text_to_vector` and `get_cosine` to calculate cosine similarity
-            # Iterate through the rows of the sheet and perform cosine similarity check
-            for i in data_list[0:2]:
-                s = str(i)
-                vector1 = text_to_vector(predefined_string)  # Replace with actual string/vector
-                vector2 = text_to_vector(s)
-                cosine = get_cosine(vector1, vector2)
+            # Form groups based on some logic (assumed functions like `extract_values_from_date_regex`)
+            groups = extract_values_from_date_regex(data_list)  # Update this with your actual function logic
+            all_groups.extend(groups)
 
-                if cosine > 0.48:
-                    df = pd.read_excel(xls, sheet_name=sheet, header=None)
-                    cleaned_data = process_and_clean_data(df.values.tolist())  # Placeholder for your cleaning functions
-                    all_tran.extend(transaction_type(cleaned_data))
+            # Collect other necessary transaction data
+            transactions = transaction_type(data_list)  # Update this with your actual function logic
+            all_transactions.extend(transactions)
 
-                    # Determine if it is a value-based group
-                    groups = extract_values_from_date_regex(cleaned_data)
-                    all_groups.extend(groups)
+        # Create DataFrame using all_groups after forming groups
+        df = pd.DataFrame(all_groups)
 
-        # After processing Excel, match with corresponding PDF
+        # Extract ISIN numbers from the corresponding PDF
         corresponding_pdf_file = excel_file.replace('.xlsx', '.pdf')
         pdf_path = os.path.join(pdf_file_folder, corresponding_pdf_file)
-
+        
         if os.path.exists(pdf_path):
             print(f"Processing PDF: {pdf_path}")
-
-            text = process_pdf_text(pdf_path)
-            folio_numbers = re.findall(folio_numbers_pattern, text)
-            folio_list.extend(folio_numbers)
-
-            extracted_info = extract_info_from_text(text)
-            inf.extend(extracted_info)
-
-        # Create DataFrame using all_groups
-        df = pd.DataFrame(all_groups)
-        df['Transaction Type'] = pd.Series(all_tran)
-
-        if folio_list:
-            df['Folio Number'] = pd.Series([folio_list[0]] * len(df), index=df.index)
+            pdf_text = process_pdf_text(pdf_path)
+            extracted_isin = extract_isin_from_text(pdf_text)
         
-        if inf:
-            # Assign ISIN number based on the length of each group
-            isin_expanded = []
-            inf_index = 0
-            for group in all_groups:
-                group_len = len(group) if isinstance(group, list) else 1
-                isin_expanded.extend([inf[inf_index]] * group_len)
-                inf_index += 1
+        # Repeat each ISIN number according to the length of its group
+        isin_expanded = []
+        isin_index = 0
+        
+        for group in all_groups:
+            group_len = len(group) if isinstance(group, list) else 1
+            
+            # Ensure there is enough ISIN data to assign
+            if isin_index < len(extracted_isin):
+                isin_expanded.extend([extracted_isin[isin_index]] * group_len)
+                isin_index += 1
 
+        # Adding columns to DataFrame
+        df['Transaction Type'] = pd.Series(all_transactions)
+        
+        if extracted_isin:
             df['ISIN Number'] = pd.Series(isin_expanded, index=df.index)
-
-        if c2:
-            df['Company Name'] = pd.Series([c2[0]] * len(df), index=df.index)
-
-        # Save the DataFrame to CSV
+        
+        # Save DataFrame to CSV
         csv_filename = f"{os.path.splitext(excel_file)[0]}.csv"
         csv_path = os.path.join(output_folder, csv_filename)
         df.to_csv(csv_path, index=False)
         print(f"Data saved to {csv_path}")
-
-        # Clean up lists for next iteration
-        inf.clear()
-        folio_list.clear()
-        all_groups.clear()
-        all_tran.clear()
-        c2.clear()
