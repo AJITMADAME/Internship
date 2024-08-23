@@ -106,7 +106,15 @@ for excel_file in os.listdir(excel_folder):
             df['Folio Number'] = pd.Series([folio_list[0]] * len(df), index=df.index)
         
         if inf:
-            df['ISIN Number'] = pd.Series(inf[:len(df)])  # Ensure ISIN matches the length of the DataFrame
+            # Assign ISIN number based on the length of each group
+            isin_expanded = []
+            inf_index = 0
+            for group in all_groups:
+                group_len = len(group) if isinstance(group, list) else 1
+                isin_expanded.extend([inf[inf_index]] * group_len)
+                inf_index += 1
+
+            df['ISIN Number'] = pd.Series(isin_expanded, index=df.index)
 
         if c2:
             df['Company Name'] = pd.Series([c2[0]] * len(df), index=df.index)
