@@ -3,20 +3,24 @@ import re
 import pandas as pd
 from PyPDF2 import PdfReader
 
-# Define the path to your PDF files and output
+# Define the paths to your folders and files
+excel_folder = r"D:\Python\ajit\birla\rename_excel"
 pdf_file_folder = r"D:\Python\ajit\birla\rename_pdf"
 output_folder = r"D:\Python\ajit\birla\sample_csv"
+new_pdf_path = r"D:\Python\ajit\birla\moved"
 
-# Define a pattern to search for in the text
-pattern = r"INF209"
+# Regular expression patterns
 folio_numbers_pattern = r'Folio Number\s*:\s*(\d+(?:\s*/\s*\d+)?)'
+isin_pattern = r"INF209"
 
-# Initialize lists to store results
+# Lists to store extracted data
 inf = []
 folio_list = []
 
-# Function to process text from PDFs
 def process_pdf_text(pdf_path):
+    """
+    Function to extract text from all pages of a given PDF.
+    """
     reader = PdfReader(pdf_path)
     num_pages = len(reader.pages)
     combined_text = ""
@@ -29,10 +33,12 @@ def process_pdf_text(pdf_path):
     
     return combined_text
 
-# Function to extract relevant information from text
 def extract_info_from_text(tes):
+    """
+    Function to extract relevant ISIN-related information from text.
+    """
     tes = tes.replace(',', '').replace("(", "").replace(')', '').replace("NAV", "")
-    indices = [m.start(0) for m in re.finditer(pattern, tes)]
+    indices = [m.start(0) for m in re.finditer(isin_pattern, tes)]
 
     extracted_data = []
     for i in indices:
@@ -44,39 +50,76 @@ def extract_info_from_text(tes):
     
     return extracted_data
 
-# Process each PDF in the specified folder
-for pdf_file in os.listdir(pdf_file_folder):
-    pdf_path = os.path.join(pdf_file_folder, pdf_file)
-    print(f"Processing PDF: {pdf_path}")
+# Loop through each Excel file
+for excel_file in os.listdir(excel_folder):
+    xl_path = os.path.join(excel_folder, excel_file)
+    print(f"Processing Excel: {xl_path}")
     
-    if pdf_path.endswith(".pdf"):
-        # Extract text from PDF
-        text = process_pdf_text(pdf_path)
+    if xl_path.endswith(".xlsx"):
+        xls = pd.ExcelFile(xl_path)
+        table_names = xls.sheet_names
+        
+        all_groups = []
+        all_tran = []
+        c2 = []
 
-        # Extract folio numbers
-        folio_numbers = re.findall(folio_numbers_pattern, text)
-        folio_list.extend(folio_numbers)
+        for sheet in table_names:
+            df = pd.read_excel(xls, sheet_name=sheet, header=None)
+            data_list = df.values.tolist()
 
-        # Extract relevant information based on your criteria
-        extracted_info = extract_info_from_text(text)
-        inf.extend(extracted_info)
+            # Assuming a function `text_to_vector` and `get_cosine` to calculate cosine similarity
+            # Iterate through the rows of the sheet and perform cosine similarity check
+            for i in data_list[0:2]:
+                s = str(i)
+                vector1 = text_to_vector(predefined_string)  # Replace with actual string/vector
+                vector2 = text_to_vector(s)
+                cosine = get_cosine(vector1, vector2)
 
-# Create final DataFrame
-df = pd.DataFrame(columns=['Date', 'Amount (INR)', 'NAV (INR)', 'Price (INR)', 'No_of_Unit', 'Balance_Unit'])
+                if cosine > 0.48:
+                    df = pd.read_excel(xls, sheet_name=sheet, header=None)
+                    cleaned_data = process_and_clean_data(df.values.tolist())  # Placeholder for your cleaning functions
+                    all_tran.extend(transaction_type(cleaned_data))
 
-# Assuming you have already defined `all_tran`, `c2`, and other lists required for DataFrame creation
-df['Transaction Type'] = pd.Series(all_tran)
-df['Company Name'] = pd.Series([c2[0]] * len(df), index=df.index)
+                    # Determine if it is a value-based group
+                    groups = extract_values_from_date_regex(cleaned_data)
+                    all_groups.extend(groups)
 
-# Assuming `folio_list` and `inf` have valid values
-if folio_list:
-    df['Folio Number'] = pd.Series([folio_list[0]] * len(df), index=df.index)
-if inf:
-    df['ISIN Number'] = pd.Series(inf)
+        # After processing Excel, match with corresponding PDF
+        corresponding_pdf_file = excel_file.replace('.xlsx', '.pdf')
+        pdf_path = os.path.join(pdf_file_folder, corresponding_pdf_file)
 
-print(df)
+        if os.path.exists(pdf_path):
+            print(f"Processing PDF: {pdf_path}")
 
-# Save the DataFrame to CSV
-csv_path = os.path.join(output_folder, "final_output.csv")
-df.to_csv(csv_path, index=False)
-print(f"Data saved to {csv_path}")
+            text = process_pdf_text(pdf_path)
+            folio_numbers = re.findall(folio_numbers_pattern, text)
+            folio_list.extend(folio_numbers)
+
+            extracted_info = extract_info_from_text(text)
+            inf.extend(extracted_info)
+
+        # Create DataFrame using all_groups
+        df = pd.DataFrame(all_groups)
+        df['Transaction Type'] = pd.Series(all_tran)
+
+        if folio_list:
+            df['Folio Number'] = pd.Series([folio_list[0]] * len(df), index=df.index)
+        
+        if inf:
+            df['ISIN Number'] = pd.Series(inf[:len(df)])  # Ensure ISIN matches the length of the DataFrame
+
+        if c2:
+            df['Company Name'] = pd.Series([c2[0]] * len(df), index=df.index)
+
+        # Save the DataFrame to CSV
+        csv_filename = f"{os.path.splitext(excel_file)[0]}.csv"
+        csv_path = os.path.join(output_folder, csv_filename)
+        df.to_csv(csv_path, index=False)
+        print(f"Data saved to {csv_path}")
+
+        # Clean up lists for next iteration
+        inf.clear()
+        folio_list.clear()
+        all_groups.clear()
+        all_tran.clear()
+        c2.clear()
